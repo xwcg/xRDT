@@ -617,6 +617,31 @@ namespace xReddit
     public class CommentThing : Thing
     {
         #region Private Properties
+
+        //private string _subredditId;
+        //private string? bannedBy;  
+        //private ??? _likes;     
+        //private int? _gilded;  
+        //private string _parentId;
+        //private ??? _approvedBy; 
+        //private bool _edited;
+        //private string _flairClass;
+        //private string _flair;    
+        //private string _bodyHtml;  
+        //private int _reportsCount;
+        //private bool? _distinguished;
+        private string _subreddit;
+        private List<CommentThing> _replies;
+        private string _id;
+        private string _author;
+        private string _body;
+        private int _votesDown;
+        private int _votesUp;
+        private bool _scoreHidden;
+        private string _name;
+        private double _ts_created;
+        private double _ts_createdUTC;
+
         #endregion
 
         #region Public Properties
@@ -636,6 +661,28 @@ namespace xReddit
 
         private void ParseData ()
         {
+            // base.ThingData.Value<string>("subreddit")
+
+            this._subreddit = base.ThingData.Value<string>("subreddit");
+            this._id = base.ThingData.Value<string>("id");
+            this._author = base.ThingData.Value<string>("author");
+            this._body = base.ThingData.Value<string>("body");
+            this._votesDown = base.ThingData.Value<int>("downs");
+            this._votesUp = base.ThingData.Value<int>("ups");
+            this._scoreHidden = base.ThingData.Value<bool>("score_hidden");
+            this._name = base.ThingData.Value<string>("name");
+            this._ts_created = base.ThingData.Value<double>("created");
+            this._ts_createdUTC = base.ThingData.Value<double>("created_utc");
+
+            JArray array = (JArray)base.ThingData["replies"];
+            IList<JObject> children = array.ToObject<IList<JObject>>();
+
+            foreach ( JObject jo in children )
+            {
+                Thing t = new Thing(jo);
+                if ( t.Kind == ThingKind.Comment )
+                    this._replies.Add(t.ToComment());
+            }
         }
     }
 
