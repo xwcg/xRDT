@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using xLogger;
 
 namespace xReddit
 {
@@ -64,6 +65,7 @@ namespace xReddit
                 return this.data;
             }
         }
+          
         #endregion
 
         public Thing ( string json )
@@ -131,18 +133,30 @@ namespace xReddit
                     break;
             }
 
-            Console.WriteLine(this._kind.ToString());
+            //Console.WriteLine(this._kind.ToString());
+
+            Logger.WriteLine(String.Format(">> (Thing) of kind '{0}' received", this._kind.ToString()), ConsoleColor.DarkYellow);
 
             this.data = raw.Value<JObject>("data");
 
-            if ( data == null )
-                Console.WriteLine(raw.ToString());
-            else
-                Console.WriteLine(data.ToString());
+            //if ( data == null )
+            //    Console.WriteLine(raw.ToString());
+            //else
+            //    Console.WriteLine(data.ToString());
+        }
+
+        public UserThing ToUser ()
+        {
+            return new UserThing(this);
+        }
+
+        public LinkThing ToLink ()
+        {
+            return new LinkThing(this);
         }
     }
 
-    public class AccountThing : Thing
+    public class UserThing : Thing
     {
         #region Private Properties
         private bool _hasMail;
@@ -242,7 +256,7 @@ namespace xReddit
                 return this._isGold;
             }
         }
-        
+
         public Boolean IsModerator
         {
             get
@@ -277,13 +291,13 @@ namespace xReddit
 
         #endregion
 
-        public AccountThing ( string json )
+        public UserThing ( string json )
             : base(json)
         {
             this.ParseData();
         }
 
-        public AccountThing ( Thing baseThing )
+        public UserThing ( Thing baseThing )
             : base(baseThing)
         {
             this.ParseData();
@@ -305,6 +319,211 @@ namespace xReddit
             this._verified = base.ThingData.Value<bool>("has_verified_email");
             this._userid = base.ThingData.Value<string>("id");
             this._hasModMail = base.ThingData.Value<bool>("has_mod_mail");
+
+            Logger.WriteLine(String.Format(">& (Thing) for user '{0}' parsed", this._name), ConsoleColor.DarkYellow);
+        }
+    }
+
+    public class LinkThing : Thing
+    {
+        #region Private Properties
+
+        /*
+         * Commented data not yet added out of laziness
+         * 
+         * (type)? indicates that I am not sure about the data type
+         * ??? indicated that I have no idea about the data type
+         * 
+         */
+        //private string _domain;
+        //private string? _bannedBy;
+        //private object? _embedded; 
+        //private string _subredditId;   
+        //private ??? _likes;
+        //private string _flair;    
+        //private ??? _media;    
+        //private string? _approvedBy;
+        //private ??? _thumbnail;
+        //private bool _edited;         
+        //private string _flairCssClass;
+        //private string _flairAuthorCssClass;
+        //private bool _saved;
+        //private bool _isSelf;
+        //private string _permalink;   
+        //private string _flairAuthor;  
+        //private int _reportsCount;
+        //private bool? _distinguished; 
+        //private string _textHtml;
+        private string _subreddit;
+        private string _text;
+        private string _id;
+        private string _name;
+        private string _title;
+        private int _score;
+        private int _votesUp;
+        private int _votesDown;
+        private bool _nsfw;
+        private bool _hidden;
+        private double _ts_created;
+        private double _ts_createdUTC;
+        private string _url;
+        private string _author;
+        private int _commentsCount;  
+
+        #endregion
+
+        #region Public Properties
+        public String Subreddit
+        {
+            get
+            {
+                return this._subreddit;
+            }
+        }
+
+        public String Text
+        {
+            get
+            {
+                return this._text;
+            }
+        }
+
+        public String Id
+        {
+            get
+            {
+                return this._id;
+            }
+        }
+
+        public String Name
+        {
+            get
+            {
+                return this._name;
+            }
+        }
+
+        public String Title
+        {
+            get
+            {
+                return this._title;
+            }
+        }
+
+        public Int32 Score
+        {
+            get
+            {
+                return this._score;
+            }
+        }
+
+        public Int32 Upvotes
+        {
+            get
+            {
+                return this._votesUp;
+            }
+        }
+
+        public Int32 Downvotes
+        {
+            get
+            {
+                return this._votesDown;
+            }
+        }
+
+        public Boolean NSFW
+        {
+            get
+            {
+                return this._nsfw;
+            }
+        }
+
+        public Boolean Hidden
+        {
+            get
+            {
+                return this._hidden;
+            }
+        }
+
+        public DateTime Created
+        {
+            get
+            {
+                return Helpers.TimestampToDate(this._ts_created);
+            }
+        }
+
+        public DateTime CreatedUTC
+        {
+            get
+            {
+                return Helpers.TimestampToDate(this._ts_createdUTC);
+            }
+        }
+
+        public String URL
+        {
+            get
+            {
+                return this._url;
+            }
+        }
+
+        public String AuthorName
+        {
+            get
+            {
+                return this._author;
+            }
+        }
+
+        public Int32 CommentsCount
+        {
+            get
+            {
+                return this._commentsCount;
+            }
+        }
+
+        #endregion
+
+        public LinkThing ( string json )
+            : base(json)
+        {
+            this.ParseData();
+        }
+
+        public LinkThing ( Thing baseThing )
+            : base(baseThing)
+        {
+            this.ParseData();
+        }
+
+        public void ParseData ()
+        {                                                                
+            this._subreddit = base.ThingData.Value<string>("subreddit");
+            this._text = base.ThingData.Value<string>("selftext");
+            this._id = base.ThingData.Value<string>("id");
+            this._name = base.ThingData.Value<string>("name");
+            this._title = base.ThingData.Value<string>("title");
+            this._score = base.ThingData.Value<int>("score");
+            this._votesUp = base.ThingData.Value<int>("ups");
+            this._votesDown = base.ThingData.Value<int>("downs");
+            this._nsfw = base.ThingData.Value<bool>("over_18");
+            this._hidden = base.ThingData.Value<bool>("hidden");
+            this._ts_created = base.ThingData.Value<double>("created");
+            this._ts_createdUTC = base.ThingData.Value<double>("created_utc");
+            this._url = base.ThingData.Value<string>("url");
+            this._author = base.ThingData.Value<string>("author");
+            this._commentsCount = base.ThingData.Value<int>("num_comments");
         }
     }
 }
