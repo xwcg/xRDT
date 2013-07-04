@@ -19,6 +19,7 @@ namespace xReddit
         Message,
         Subreddit,
         Award,
+        Listing,
         PromoCampaign
     }
 
@@ -82,16 +83,18 @@ namespace xReddit
             this._thingName = baseThing._thingName;
         }
 
+        public Thing ( JObject rawObject )
+        {
+            this.raw = rawObject;
+            this.ParseFromRaw();
+        }
+
         public Thing ()
         {
         }
 
-        public void ParseJson ( string json )
+        public void ParseFromRaw ()
         {
-            raw = JObject.Parse(json);
-
-            this._thingId = raw.Value<string>("id");
-            this._thingName = raw.Value<string>("name");
             string kindStr = raw.Value<string>("kind");
 
             switch ( kindStr )
@@ -128,21 +131,37 @@ namespace xReddit
                     this._kind = ThingKind.PromoCampaign;
                     break;
 
+                case "Listing":
+                    this._kind = ThingKind.Listing;
+                    break;
+
                 default:
+                    Logger.WriteLine(String.Format("## (Thing) kind '{0}' unknown", kindStr), ConsoleColor.DarkRed);
                     this._kind = ThingKind.Unknown;
                     break;
             }
 
-            //Console.WriteLine(this._kind.ToString());
+            if ( this._kind != ThingKind.Listing )
+            {
+                this._thingId = raw.Value<string>("id");
+                this._thingName = raw.Value<string>("name");
+            }
+            else
+            {
+                this._thingId = "";
+                this._thingName = "Listing";
+            }
+                                                            
+            this.data = raw.Value<JObject>("data");     
+        
+            Logger.WriteLine(String.Format(">> (Thing) of kind '{0}' parsed", this._kind.ToString()), ConsoleColor.DarkYellow);
+        }
 
-            Logger.WriteLine(String.Format(">> (Thing) of kind '{0}' received", this._kind.ToString()), ConsoleColor.DarkYellow);
+        public void ParseJson ( string json )
+        {
+            raw = JObject.Parse(json);
 
-            this.data = raw.Value<JObject>("data");
-
-            //if ( data == null )
-            //    Console.WriteLine(raw.ToString());
-            //else
-            //    Console.WriteLine(data.ToString());
+            this.ParseFromRaw();
         }
 
         public UserThing ToUser ()
@@ -153,6 +172,11 @@ namespace xReddit
         public LinkThing ToLink ()
         {
             return new LinkThing(this);
+        }
+
+        public ListThing ToListing ()
+        {
+            return new ListThing(this);
         }
     }
 
@@ -534,9 +558,19 @@ namespace xReddit
     public class ListThing : Thing
     {
         #region Private Properties
+        private List<LinkThing> _children = new List<LinkThing>();
         #endregion
 
         #region Public Properties
+
+        public List<LinkThing> Links
+        {
+            get
+            {
+                return this._children;
+            }
+        }
+
         #endregion
 
         public ListThing ( string json )
@@ -553,6 +587,13 @@ namespace xReddit
 
         private void ParseData ()
         {
+            JArray array = (JArray)base.ThingData["children"];
+            IList<JObject> children = array.ToObject<IList<JObject>>();
+           
+            foreach ( JObject jo in children )
+            {
+                this._children.Add(new LinkThing(new Thing(jo)));
+            }
         }
     }
 
