@@ -220,5 +220,10 @@ namespace xReddit
         {
             this.Request(RAPIRequest.GET_ME, callback);
         }
+
+        public void Get_SubredditHot ( string name, int limit, QueueCallback callback )
+        {
+            this.Request(RAPIRequest.GET_HOT, name, limit, callback);
+        }
     }
 }
