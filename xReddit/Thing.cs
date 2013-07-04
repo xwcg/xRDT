@@ -20,6 +20,7 @@ namespace xReddit
         Subreddit,
         Award,
         Listing,
+        More,
         PromoCampaign
     }
 
@@ -135,6 +136,10 @@ namespace xReddit
                     this._kind = ThingKind.Listing;
                     break;
 
+                case "more":
+                    this._kind = ThingKind.More;
+                    break;
+
                 default:
                     Logger.WriteLine(String.Format("## (Thing) kind '{0}' unknown", kindStr), ConsoleColor.DarkRed);
                     this._kind = ThingKind.Unknown;
@@ -143,17 +148,19 @@ namespace xReddit
 
             if ( this._kind != ThingKind.Listing )
             {
-                this._thingId = raw.Value<string>("id");
+                if ( this._kind != ThingKind.More )
+                    this._thingId = raw.Value<string>("id");
+
                 this._thingName = raw.Value<string>("name");
             }
             else
             {
                 this._thingId = "";
-                this._thingName = "Listing";
+                this._thingName = this._kind.ToString();
             }
-                                                            
-            this.data = raw.Value<JObject>("data");     
-        
+
+            this.data = raw.Value<JObject>("data");
+
             Logger.WriteLine(String.Format(">> (Thing) of kind '{0}' parsed", this._kind.ToString()), ConsoleColor.DarkYellow);
         }
 
@@ -177,6 +184,16 @@ namespace xReddit
         public ListThing ToListing ()
         {
             return new ListThing(this);
+        }
+
+        public CommentThing ToComment ()
+        {
+            return new CommentThing(this);
+        }
+
+        public MessageThing ToMessage ()
+        {
+            return new MessageThing(this);
         }
     }
 
@@ -558,12 +575,12 @@ namespace xReddit
     public class ListThing : Thing
     {
         #region Private Properties
-        private List<LinkThing> _children = new List<LinkThing>();
+        private List<Thing> _children = new List<Thing>();
         #endregion
 
         #region Public Properties
 
-        public List<LinkThing> Links
+        public List<Thing> Children
         {
             get
             {
@@ -589,10 +606,10 @@ namespace xReddit
         {
             JArray array = (JArray)base.ThingData["children"];
             IList<JObject> children = array.ToObject<IList<JObject>>();
-           
+
             foreach ( JObject jo in children )
             {
-                this._children.Add(new LinkThing(new Thing(jo)));
+                this._children.Add(new Thing(jo));
             }
         }
     }
