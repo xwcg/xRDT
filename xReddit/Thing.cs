@@ -65,7 +65,7 @@ namespace xReddit
                 return this.data;
             }
         }
-          
+
         #endregion
 
         public Thing ( string json )
@@ -368,7 +368,7 @@ namespace xReddit
         private double _ts_createdUTC;
         private string _url;
         private string _author;
-        private int _commentsCount;  
+        private int _commentsCount;
 
         #endregion
 
@@ -508,7 +508,7 @@ namespace xReddit
         }
 
         public void ParseData ()
-        {                                                                
+        {
             this._subreddit = base.ThingData.Value<string>("subreddit");
             this._text = base.ThingData.Value<string>("selftext");
             this._id = base.ThingData.Value<string>("id");
@@ -524,6 +524,85 @@ namespace xReddit
             this._url = base.ThingData.Value<string>("url");
             this._author = base.ThingData.Value<string>("author");
             this._commentsCount = base.ThingData.Value<int>("num_comments");
+        }
+    }
+
+    /// <summary>
+    /// ListThing... ListTHING, get it? .. Because... Listing - ListThing?
+    /// I'll see myself out...
+    /// </summary>
+    public class ListThing : Thing
+    {
+        #region Private Properties
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        public ListThing ( string json )
+            : base(json)
+        {
+            this.ParseData();
+        }
+
+        public ListThing ( Thing baseThing )
+            : base(baseThing)
+        {
+            this.ParseData();
+        }
+
+        private void ParseData ()
+        {
+        }
+    }
+
+    public class CommentThing : Thing
+    {
+        #region Private Properties
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        public CommentThing ( string json )
+            : base(json)
+        {
+            this.ParseData();
+        }
+
+        public CommentThing ( Thing baseThing )
+            : base(baseThing)
+        {
+            this.ParseData();
+        }
+
+        private void ParseData ()
+        {
+        }
+    }
+
+    public class MessageThing : Thing
+    {
+        #region Private Properties
+        #endregion
+
+        #region Public Properties
+        #endregion
+
+        public MessageThing ( string json )
+            : base(json)
+        {
+            this.ParseData();
+        }
+
+        public MessageThing ( Thing baseThing )
+            : base(baseThing)
+        {
+            this.ParseData();
+        }
+
+        private void ParseData ()
+        {
         }
     }
 }
