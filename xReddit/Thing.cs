@@ -166,7 +166,22 @@ namespace xReddit
 
         public void ParseJson ( string json )
         {
-            raw = JObject.Parse(json);
+            if ( json.Trim().Length == 0 )
+                return;
+
+            try
+            {
+                raw = JObject.Parse(json);
+            }
+            catch ( Exception x )
+            {
+                JObject[] rawArray = JsonConvert.DeserializeObject<JObject[]>(json);
+
+                if ( rawArray.Length == 2 )
+                    raw = rawArray[1];
+                else
+                    throw new Exception("Holy Shit");
+            }
 
             this.ParseFromRaw();
         }
@@ -631,7 +646,7 @@ namespace xReddit
         //private int _reportsCount;
         //private bool? _distinguished;
         private string _subreddit;
-        private List<CommentThing> _replies;
+        private List<CommentThing> _replies = new List<CommentThing>();
         private string _id;
         private string _author;
         private string _body;
@@ -645,6 +660,95 @@ namespace xReddit
         #endregion
 
         #region Public Properties
+
+        public String Subreddit
+        {
+            get
+            {
+                return this._subreddit;
+            }
+        }
+
+        public List<CommentThing> Replies
+        {
+            get
+            {
+                return this._replies;
+            }
+        }
+
+        public String Id
+        {
+            get
+            {
+                return this._id;
+            }
+        }
+
+        public String Author
+        {
+            get
+            {
+                return this._author;
+            }
+        }
+
+        public String Text
+        {
+            get
+            {
+                return this._body;
+            }
+        }
+
+        public Int32 Upvotes
+        {
+            get
+            {
+                return this._votesUp;
+            }
+        }
+
+        public Int32 Downvotes
+        {
+            get
+            {
+                return this._votesDown;
+            }
+        }
+
+        public Boolean IsScoreHidden
+        {
+            get
+            {
+                return this._scoreHidden;
+            }
+        }
+
+        public String Name
+        {
+            get
+            {
+                return this._name;
+            }
+        }
+
+        public DateTime Created
+        {
+            get
+            {
+                return Helpers.TimestampToDate(this._ts_created);
+            }
+        }
+
+        public DateTime CreatedUTC
+        {
+            get
+            {
+                return Helpers.TimestampToDate(this._ts_createdUTC);
+            }
+        }
+
         #endregion
 
         public CommentThing ( string json )
@@ -661,8 +765,6 @@ namespace xReddit
 
         private void ParseData ()
         {
-            // base.ThingData.Value<string>("subreddit")
-
             this._subreddit = base.ThingData.Value<string>("subreddit");
             this._id = base.ThingData.Value<string>("id");
             this._author = base.ThingData.Value<string>("author");
@@ -674,14 +776,19 @@ namespace xReddit
             this._ts_created = base.ThingData.Value<double>("created");
             this._ts_createdUTC = base.ThingData.Value<double>("created_utc");
 
-            JArray array = (JArray)base.ThingData["replies"];
-            IList<JObject> children = array.ToObject<IList<JObject>>();
+            string repliesJson = this.ThingData["replies"].ToString();
 
-            foreach ( JObject jo in children )
+            if ( repliesJson.Trim().Length > 0 )
             {
-                Thing t = new Thing(jo);
-                if ( t.Kind == ThingKind.Comment )
-                    this._replies.Add(t.ToComment());
+                ListThing replies = new ListThing(repliesJson);
+
+                foreach ( Thing child in replies.Children )
+                {
+                    if ( child.Kind == ThingKind.Comment )
+                    {
+                        this._replies.Add(child.ToComment());
+                    }
+                }
             }
         }
     }
