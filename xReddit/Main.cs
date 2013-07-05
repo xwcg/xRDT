@@ -182,7 +182,10 @@ namespace xReddit
                         break;
 
                     case RAPIRequest.GET_COMMENTS:
-                        result = _requestObj.Get(String.Format("{0}/r/{1}/comments/{2}.json", _APIUrl, queueItem.payload["subreddit"], queueItem.payload["id"]));
+                        result = _requestObj.Get(String.Format("{0}/r/{1}/comments/{2}.json?depth=100&sort=hot", _APIUrl, queueItem.payload["subreddit"], queueItem.payload["id"]));
+                        break;
+                    case RAPIRequest.SEND_COMMENT:
+                        result = _requestObj.Make(_APIUrl + "/api/comment", queueItem.payload);
                         break;
                 }
 
@@ -224,6 +227,15 @@ namespace xReddit
         public void Get_SubredditHot ( string name, int limit, QueueCallback callback )
         {
             this.Request(RAPIRequest.GET_HOT, name, limit, callback);
+        }
+
+        public void Get_Comments ( string subreddit, string id, QueueCallback callback )
+        {
+            this.Request(RAPIRequest.GET_COMMENTS, new NameValueCollection
+            {
+                {"subreddit", subreddit},
+                {"id", id}
+            }, callback);
         }
     }
 }
