@@ -31,9 +31,17 @@ namespace xReddit
         public NameValueCollection payload;
     }
 
+    public static class RedditModhash
+    {
+        public static string hash = "";
+    }
+
     public class RedditAPI
     {
         public delegate void QueueCallback ( Thing result );
+
+        public delegate void CommentCallback ( CommentThing[] result );
+
         private Queue<RAPIQO> queue = new Queue<RAPIQO>();
 
         private Thread QueueThread;
@@ -229,13 +237,40 @@ namespace xReddit
             this.Request(RAPIRequest.GET_HOT, name, limit, callback);
         }
 
-        public void Get_Comments ( string subreddit, string id, QueueCallback callback )
+        public void Get_Comments ( string subreddit, string id, CommentCallback callback )
         {
             this.Request(RAPIRequest.GET_COMMENTS, new NameValueCollection
             {
                 {"subreddit", subreddit},
                 {"id", id}
-            }, callback);
+            },
+            ( result ) =>
+            {
+                ListThing commentResults = result.ToListing();
+                List<CommentThing> commentList = new List<CommentThing>();
+                foreach ( Thing crt in commentResults.Children )
+                {
+                    if ( crt.Kind == ThingKind.Comment )
+                        commentList.Add(crt.ToComment());
+                }
+                callback(commentList.ToArray());
+            });
+        }
+
+        public void Reply ( string thing_name, string text )
+        {
+            this.Reply(new NameValueCollection
+            {
+                {"api_type", "json"},
+                {"text", text},
+                {"thing_id", thing_name},
+                {"uh", RedditModhash.hash}
+            });
+        }
+
+        public void Reply ( NameValueCollection payload )
+        {
+            this.Request(RAPIRequest.SEND_COMMENT, payload, null);
         }
     }
 }
