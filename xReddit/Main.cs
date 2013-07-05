@@ -193,6 +193,7 @@ namespace xReddit
                         result = _requestObj.Get(String.Format("{0}/r/{1}/comments/{2}.json?depth=100&sort=hot", _APIUrl, queueItem.payload["subreddit"], queueItem.payload["id"]));
                         break;
                     case RAPIRequest.SEND_COMMENT:
+                        Logger.WriteLine(String.Format("<< Replying to '{0}'", queueItem.payload["thing_id"]), ConsoleColor.Green);
                         result = _requestObj.Make(_APIUrl + "/api/comment", queueItem.payload);
                         break;
                 }
