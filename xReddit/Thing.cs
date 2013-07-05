@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -619,6 +620,8 @@ namespace xReddit
 
         private void ParseData ()
         {
+            RedditModhash.hash = base.ThingData["modhash"].ToString();
+
             JArray array = (JArray)base.ThingData["children"];
             IList<JObject> children = array.ToObject<IList<JObject>>();
 
@@ -790,6 +793,17 @@ namespace xReddit
                     }
                 }
             }
+        }
+
+        public NameValueCollection GetReplyPayload ( string text )
+        {
+            return new NameValueCollection
+            {
+                {"api_type", "json"},
+                {"text", text},
+                {"thing_id", this._name},
+                {"uh", RedditModhash.hash}
+            };
         }
     }
 
