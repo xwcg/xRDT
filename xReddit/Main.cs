@@ -73,6 +73,12 @@ namespace xReddit
             this._requestObj = new Request(this._UserAgent);
         }
 
+        public RedditAPI (string userAgent)
+        {
+            this._UserAgent = String.Format("{0} using {1}", userAgent, this._UserAgent);
+            this._requestObj = new Request(this._UserAgent);
+        }
+
         #region Queue
         private void Request ( RAPIRequest type, QueueCallback callback )
         {
