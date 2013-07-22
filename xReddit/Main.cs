@@ -16,7 +16,9 @@ namespace xReddit
         GET_COMMENTS,
         SEND_COMMENT,
         GET_HOT,
-        GET_NEW
+        GET_NEW,
+        GET_HOT_ALL,
+        GET_NEW_ALL
     }
 
     /// <summary>
@@ -73,7 +75,7 @@ namespace xReddit
             this._requestObj = new Request(this._UserAgent);
         }
 
-        public RedditAPI (string userAgent)
+        public RedditAPI ( string userAgent )
         {
             this._UserAgent = String.Format("{0} using {1}", userAgent, this._UserAgent);
             this._requestObj = new Request(this._UserAgent);
@@ -147,6 +149,7 @@ namespace xReddit
         {
             Logger.WriteLine("** Request Queue Started", ConsoleColor.Green);
             this.TimeframeStart = DateTime.Now;
+            DateTime iterationStart = DateTime.Now;
 
             while ( RunQueue )
             {
@@ -155,6 +158,8 @@ namespace xReddit
                     Thread.Sleep(_WaitTime);
                     continue;
                 }
+
+                iterationStart = DateTime.Now;
 
                 if ( this._Requests >= this._MaxRequests )
                 {
@@ -174,8 +179,12 @@ namespace xReddit
                 }
 
                 RAPIQO queueItem = queue.Dequeue();
-                Thing result = null;
 
+                //Thread queueItemWorker = new Thread(new ParameterizedThreadStart(this.WorkItem));
+                //queueItemWorker.IsBackground = true;
+                //queueItemWorker.Start(queueItem);       
+
+                Thing result = null;
                 switch ( queueItem.type )
                 {
                     case RAPIRequest.LOGIN:
@@ -195,6 +204,14 @@ namespace xReddit
                         result = _requestObj.Get(String.Format("{0}/r/{1}/new.json?limit={2}", _APIUrl, queueItem.data, queueItem.limit));
                         break;
 
+                    case RAPIRequest.GET_HOT_ALL:
+                        result = _requestObj.Get(String.Format("{0}/hot.json?limit={1}", _APIUrl, queueItem.limit));
+                        break;
+
+                    case RAPIRequest.GET_NEW_ALL:
+                        result = _requestObj.Get(String.Format("{0}/new.json?limit={1}", _APIUrl, queueItem.limit));
+                        break;
+
                     case RAPIRequest.GET_COMMENTS:
                         result = _requestObj.Get(String.Format("{0}/r/{1}/comments/{2}.json?depth=100&sort=hot", _APIUrl, queueItem.payload["subreddit"], queueItem.payload["id"]));
                         break;
@@ -205,11 +222,85 @@ namespace xReddit
                 }
 
                 if ( queueItem.Callback != null )
-                    queueItem.Callback(result);
+                {
+                    //queueItem.Callback(result);
+
+                    Thread callbackThread = new Thread(new ParameterizedThreadStart(CallbackWorker));
+                    object[] args = new object[] { queueItem, result };
+
+                    callbackThread.IsBackground = true;
+                    callbackThread.Start(args);
+                }
 
                 this._Requests++;
-                Thread.Sleep(_WaitTime);
+
+                TimeSpan sinceIterationStart = DateTime.Now.Subtract(iterationStart);
+
+                if ( sinceIterationStart.TotalMilliseconds > this._WaitTime )
+                {
+                }
+                else
+                    Thread.Sleep((int)Math.Max(0, this._WaitTime - sinceIterationStart.TotalMilliseconds));
             }
+        }
+
+        private void CallbackWorker ( object a )
+        {
+            object[] arr = (object[])a;
+
+            RAPIQO qi = (RAPIQO)arr[0];
+            Thing result = (Thing)arr[1];
+            qi.Callback(result);
+        }
+
+        private void WorkItem ( object q )
+        {
+            Thing result = null;
+            RAPIQO queueItem = (RAPIQO)q;
+
+            while ( _requestObj.Working )
+            {
+                //Thread.SetData
+            }
+
+            switch ( queueItem.type )
+            {
+                case RAPIRequest.LOGIN:
+                    Logger.WriteLine(String.Format("<< Logging in user '{0}'", queueItem.payload["user"]), ConsoleColor.DarkGreen);
+                    result = _requestObj.Make(_APIUrl + "/api/login", queueItem.payload);
+                    break;
+
+                case RAPIRequest.GET_ME:
+                    result = _requestObj.Get(_APIUrl + "/api/me.json");
+                    break;
+
+                case RAPIRequest.GET_HOT:
+                    result = _requestObj.Get(String.Format("{0}/r/{1}/hot.json?limit={2}", _APIUrl, queueItem.data, queueItem.limit));
+                    break;
+
+                case RAPIRequest.GET_NEW:
+                    result = _requestObj.Get(String.Format("{0}/r/{1}/new.json?limit={2}", _APIUrl, queueItem.data, queueItem.limit));
+                    break;
+
+                case RAPIRequest.GET_HOT_ALL:
+                    result = _requestObj.Get(String.Format("{0}/hot.json?limit={1}", _APIUrl, queueItem.limit));
+                    break;
+
+                case RAPIRequest.GET_NEW_ALL:
+                    result = _requestObj.Get(String.Format("{0}/new.json?limit={1}", _APIUrl, queueItem.limit));
+                    break;
+
+                case RAPIRequest.GET_COMMENTS:
+                    result = _requestObj.Get(String.Format("{0}/r/{1}/comments/{2}.json?depth=100&sort=hot", _APIUrl, queueItem.payload["subreddit"], queueItem.payload["id"]));
+                    break;
+                case RAPIRequest.SEND_COMMENT:
+                    Logger.WriteLine(String.Format("<< Replying to '{0}'", queueItem.payload["thing_id"]), ConsoleColor.Green);
+                    result = _requestObj.Make(_APIUrl + "/api/comment", queueItem.payload);
+                    break;
+            }
+
+            if ( queueItem.Callback != null )
+                queueItem.Callback(result);
         }
 
         #endregion
@@ -242,6 +333,11 @@ namespace xReddit
         public void Get_SubredditHot ( string name, int limit, QueueCallback callback )
         {
             this.Request(RAPIRequest.GET_HOT, name, limit, callback);
+        }
+
+        public void Get_AllHot ( int limit, QueueCallback callback )
+        {
+            this.Request(RAPIRequest.GET_HOT_ALL, "", limit, callback);
         }
 
         public void Get_Comments ( string subreddit, string id, CommentCallback callback )
