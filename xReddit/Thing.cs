@@ -162,7 +162,7 @@ namespace xReddit
 
             this.data = raw.Value<JObject>("data");
 
-            Logger.WriteLine(String.Format(">> (Thing) of kind '{0}' parsed", this._kind.ToString()), ConsoleColor.DarkYellow);
+            //Logger.WriteLine(String.Format(">> (Thing) of kind '{0}' parsed", this._kind.ToString()), ConsoleColor.DarkYellow);
         }
 
         public void ParseJson ( string json )
@@ -377,7 +377,7 @@ namespace xReddit
             this._userid = base.ThingData.Value<string>("id");
             this._hasModMail = base.ThingData.Value<bool>("has_mod_mail");
 
-            Logger.WriteLine(String.Format(">& (Thing) for user '{0}' parsed", this._name), ConsoleColor.DarkYellow);
+            //Logger.WriteLine(String.Format(">& (Thing) for user '{0}' parsed", this._name), ConsoleColor.DarkYellow);
         }
     }
 
