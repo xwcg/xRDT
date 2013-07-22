@@ -12,7 +12,7 @@ namespace xReddit
     {
         private RequestClient _client;
 
-        public Request (string agent)
+        public Request ( string agent )
         {
             this._client = new RequestClient();
             this._client.Headers.Add("User-Agent", agent);
@@ -20,17 +20,33 @@ namespace xReddit
 
         public Thing Make ( string url, NameValueCollection data )
         {
-            byte[] response = this._client.UploadValues(url, "POST", data);
-            string responseString = Encoding.Default.GetString(response);
-                                                
-            return new Thing(responseString);
+            try
+            {
+                byte[] response = this._client.UploadValues(url, "POST", data);
+                string responseString = Encoding.Default.GetString(response);
+
+                return new Thing(responseString);
+            }
+            catch ( Exception x )
+            {
+                xLogger.Logger.WriteLine(String.Format("Request error: {0}", x.Message), ConsoleColor.Red);
+                return new Thing("");
+            }
         }
 
         public Thing Get ( string url )
         {
-            byte[] response = this._client.DownloadData(url);
-            string responseString = Encoding.Default.GetString(response);
-            return new Thing(responseString);
+            try
+            {
+                byte[] response = this._client.DownloadData(url);
+                string responseString = Encoding.Default.GetString(response);
+                return new Thing(responseString);
+            }
+            catch ( Exception x )
+            {
+                xLogger.Logger.WriteLine(String.Format("Request error: {0}", x.Message), ConsoleColor.Red);
+                return new Thing("");
+            }
         }
 
         public bool Working
