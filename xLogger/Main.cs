@@ -15,7 +15,7 @@ namespace xLogger
                                                   DateTime.Now.Minute.ToString("00"), 
                                                   DateTime.Now.Second.ToString("00")};
 
-        private static StreamWriter LogFile = new StreamWriter(String.Format("{0}-{1}-{2}_{3}-{4}-{5}.txt", DateContent));
+        private static StreamWriter LogFile = new StreamWriter(String.Format("logs\\{0}-{1}-{2}_{3}-{4}-{5}.txt", DateContent));
 
         /// <summary>
         /// Write text to console and logfile
