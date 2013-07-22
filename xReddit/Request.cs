@@ -32,6 +32,14 @@ namespace xReddit
             string responseString = Encoding.Default.GetString(response);
             return new Thing(responseString);
         }
+
+        public bool Working
+        {
+            get
+            {
+                return this._client.IsBusy;
+            }
+        }
     }
 
     public class RequestClient : WebClient
