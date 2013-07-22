@@ -44,7 +44,7 @@ namespace xReddit
 
         public delegate void CommentCallback ( CommentThing[] result );
 
-        private Queue<RAPIQO> queue = new Queue<RAPIQO>();
+        private CBQueue queue = new CBQueue();
 
         private Thread QueueThread;
 
@@ -114,6 +114,11 @@ namespace xReddit
 
         public void Request ( RAPIRequest type, string data, int limit, NameValueCollection payload, QueueCallback callback )
         {
+            this.Request(type, data, limit, payload, callback, false);
+        }
+
+        public void Request ( RAPIRequest type, string data, int limit, NameValueCollection payload, QueueCallback callback, bool atTop )
+        {
             RAPIQO item = new RAPIQO();
             item.Callback = callback;
             item.data = data;
@@ -121,7 +126,12 @@ namespace xReddit
             item.payload = payload;
             item.type = type;
 
-            queue.Enqueue(item);
+            if ( atTop )
+                queue.Enqueue(item, true);
+            else
+                queue.Enqueue(item, false);
+
+            Logger.WriteLine(String.Format("Q.Enqueue > ({1}) Count: {0}", queue.Count, type.ToString()), ConsoleColor.DarkGreen);
         }
 
         public void StartQueue ()
@@ -159,6 +169,7 @@ namespace xReddit
                     continue;
                 }
 
+
                 iterationStart = DateTime.Now;
 
                 if ( this._Requests >= this._MaxRequests )
@@ -179,6 +190,7 @@ namespace xReddit
                 }
 
                 RAPIQO queueItem = queue.Dequeue();
+                Logger.WriteLine(String.Format("Q.Dequeue > Remaining: {0}", queue.Count), ConsoleColor.DarkYellow);
 
                 //Thread queueItemWorker = new Thread(new ParameterizedThreadStart(this.WorkItem));
                 //queueItemWorker.IsBackground = true;
@@ -340,6 +352,11 @@ namespace xReddit
             this.Request(RAPIRequest.GET_HOT_ALL, "", limit, callback);
         }
 
+        public void Get_AllNew ( int limit, QueueCallback callback )
+        {
+            this.Request(RAPIRequest.GET_NEW_ALL, "", limit, callback);
+        }
+
         public void Get_Comments ( string subreddit, string id, CommentCallback callback )
         {
             this.Request(RAPIRequest.GET_COMMENTS, new NameValueCollection
@@ -373,7 +390,9 @@ namespace xReddit
 
         public void Reply ( NameValueCollection payload )
         {
-            this.Request(RAPIRequest.SEND_COMMENT, payload, null);
+            //this.Request(RAPIRequest.SEND_COMMENT, payload, null);
+
+            this.Request(RAPIRequest.SEND_COMMENT, "", 25, payload, null, true); 
         }
     }
 }
