@@ -620,14 +620,24 @@ namespace xReddit
 
         private void ParseData ()
         {
-            RedditModhash.hash = base.ThingData["modhash"].ToString();
-
-            JArray array = (JArray)base.ThingData["children"];
-            IList<JObject> children = array.ToObject<IList<JObject>>();
-
-            foreach ( JObject jo in children )
+            if ( this.ThingData != null )
             {
-                this._children.Add(new Thing(jo));
+                try
+                {
+                    RedditModhash.hash = base.ThingData["modhash"].ToString();
+                }
+                catch ( Exception x )
+                {
+                    return;
+                }
+
+                JArray array = (JArray)base.ThingData["children"];
+                IList<JObject> children = array.ToObject<IList<JObject>>();
+
+                foreach ( JObject jo in children )
+                {
+                    this._children.Add(new Thing(jo));
+                }
             }
         }
     }
